@@ -48,10 +48,7 @@ func (m Maybe[T]) UnwrapUnsafe() T {
 }
 
 func (m Maybe[T]) UnwrapOr(defaultValue T) T {
-	if m.hasValue {
-		return m.value
-	}
-	return defaultValue
+	return m.OrElse(defaultValue)
 }
 
 func (m Maybe[T]) Map(f func(T) T) Maybe[T] {

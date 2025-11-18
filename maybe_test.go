@@ -513,3 +513,22 @@ func TestChaining(t *testing.T) {
 		}
 	})
 }
+
+func TestNewMaybeEqualsNone(t *testing.T) {
+	t.Run("new(Maybe[string]) == None[string]()", func(t *testing.T) {
+		m := *new(Maybe[string])
+		none := None[string]()
+
+		if m != none {
+			t.Error("new(Maybe[string]) should equal None[string]()")
+		}
+
+		// Also verify they behave the same
+		if m.IsSome() != none.IsSome() {
+			t.Error("new(Maybe[string]) and None[string]() should have same IsSome() result")
+		}
+		if m.IsNone() != none.IsNone() {
+			t.Error("new(Maybe[string]) and None[string]() should have same IsNone() result")
+		}
+	})
+}
