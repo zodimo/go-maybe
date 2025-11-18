@@ -2,7 +2,6 @@ package maybe
 
 import (
 	"errors"
-	"reflect"
 )
 
 type Maybe[T any] struct {
@@ -21,8 +20,9 @@ func Some[T any](value T) Maybe[T] {
 	}
 }
 func None[T any]() Maybe[T] {
+	var zero T
 	return Maybe[T]{
-		value:    reflect.Zero(reflect.TypeOf((*T)(nil)).Elem()).Interface().(T),
+		value:    zero,
 		hasValue: false,
 	}
 }
@@ -37,7 +37,8 @@ func (m Maybe[T]) Unwrap() (T, error) {
 	if m.hasValue {
 		return m.value, nil
 	}
-	return reflect.Zero(reflect.TypeOf((*T)(nil)).Elem()).Interface().(T), errors.New("none")
+	var zero T
+	return zero, errors.New("none")
 }
 func (m Maybe[T]) UnwrapUnsafe() T {
 	value, err := m.Unwrap()
@@ -87,5 +88,6 @@ func (m Maybe[T]) OrElseError(err error) (T, error) {
 	if m.hasValue {
 		return m.value, nil
 	}
-	return reflect.Zero(reflect.TypeOf((*T)(nil)).Elem()).Interface().(T), err
+	var zero T
+	return zero, err
 }

@@ -706,3 +706,38 @@ func TestHelperFlatMap(t *testing.T) {
 		}
 	})
 }
+
+func TestNoneWithInterface(t *testing.T) {
+	t.Run("creates None for interface{} without panic", func(t *testing.T) {
+		m := None[interface{}]()
+		if m.IsSome() {
+			t.Error("None should create None value")
+		}
+		if !m.IsNone() {
+			t.Error("None should create None value")
+		}
+
+		// Test unwrap
+		value, err := m.Unwrap()
+		if err == nil {
+			t.Error("Unwrap should return error for None")
+		}
+		if value != nil {
+			t.Errorf("Expected nil for interface{} zero value, got %v", value)
+		}
+	})
+
+	t.Run("creates Some for interface{}", func(t *testing.T) {
+		m := Some[interface{}]("test")
+		if !m.IsSome() {
+			t.Error("Some should create Some value")
+		}
+		value, err := m.Unwrap()
+		if err != nil {
+			t.Errorf("Some should unwrap without error, got: %v", err)
+		}
+		if value != "test" {
+			t.Errorf("Expected 'test', got %v", value)
+		}
+	})
+}
