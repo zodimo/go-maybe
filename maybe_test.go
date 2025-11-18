@@ -2,6 +2,7 @@ package maybe
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -529,6 +530,179 @@ func TestNewMaybeEqualsNone(t *testing.T) {
 		}
 		if m.IsNone() != none.IsNone() {
 			t.Error("new(Maybe[string]) and None[string]() should have same IsNone() result")
+		}
+	})
+}
+
+func TestHelperMap(t *testing.T) {
+	t.Run("applies function to Some value with type transformation", func(t *testing.T) {
+		m := Some(5)
+		result := Map(m, func(x int) string {
+			return fmt.Sprintf("value: %d", x)
+		})
+
+		if !result.IsSome() {
+			t.Error("Map should return Some when applied to Some")
+		}
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("Map result should unwrap without error, got: %v", err)
+		}
+		if value != "value: 5" {
+			t.Errorf("Expected 'value: 5', got %v", value)
+		}
+	})
+
+	t.Run("returns None when applied to None", func(t *testing.T) {
+		m := None[int]()
+		result := Map(m, func(x int) string {
+			return "transformed"
+		})
+
+		if !result.IsNone() {
+			t.Error("Map should return None when applied to None")
+		}
+	})
+
+	t.Run("transforms int to string", func(t *testing.T) {
+		m := Some(42)
+		result := Map(m, func(x int) string {
+			return "number: 42"
+		})
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("Map result should unwrap without error, got: %v", err)
+		}
+		if value != "number: 42" {
+			t.Errorf("Expected 'number: 42', got %v", value)
+		}
+	})
+
+	t.Run("transforms string to int", func(t *testing.T) {
+		m := Some("123")
+		result := Map(m, func(s string) int {
+			return len(s)
+		})
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("Map result should unwrap without error, got: %v", err)
+		}
+		if value != 3 {
+			t.Errorf("Expected 3, got %v", value)
+		}
+	})
+
+	t.Run("transforms int to float", func(t *testing.T) {
+		m := Some(5)
+		result := Map(m, func(x int) float64 {
+			return float64(x) * 1.5
+		})
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("Map result should unwrap without error, got: %v", err)
+		}
+		if value != 7.5 {
+			t.Errorf("Expected 7.5, got %v", value)
+		}
+	})
+}
+
+func TestHelperFlatMap(t *testing.T) {
+	t.Run("applies function to Some value with type transformation", func(t *testing.T) {
+		m := Some(5)
+		result := FlatMap(m, func(x int) Maybe[string] {
+			if x > 0 {
+				return Some("positive")
+			}
+			return None[string]()
+		})
+
+		if !result.IsSome() {
+			t.Error("FlatMap should return Some when function returns Some")
+		}
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("FlatMap result should unwrap without error, got: %v", err)
+		}
+		if value != "positive" {
+			t.Errorf("Expected 'positive', got %v", value)
+		}
+	})
+
+	t.Run("returns None when function returns None", func(t *testing.T) {
+		m := Some(-5)
+		result := FlatMap(m, func(x int) Maybe[string] {
+			if x > 0 {
+				return Some("positive")
+			}
+			return None[string]()
+		})
+
+		if !result.IsNone() {
+			t.Error("FlatMap should return None when function returns None")
+		}
+	})
+
+	t.Run("returns None when applied to None", func(t *testing.T) {
+		m := None[int]()
+		result := FlatMap(m, func(x int) Maybe[string] {
+			return Some("transformed")
+		})
+
+		if !result.IsNone() {
+			t.Error("FlatMap should return None when applied to None")
+		}
+	})
+
+	t.Run("transforms int to string Maybe", func(t *testing.T) {
+		m := Some(42)
+		result := FlatMap(m, func(x int) Maybe[string] {
+			return Some("number: 42")
+		})
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("FlatMap result should unwrap without error, got: %v", err)
+		}
+		if value != "number: 42" {
+			t.Errorf("Expected 'number: 42', got %v", value)
+		}
+	})
+
+	t.Run("transforms string to int Maybe", func(t *testing.T) {
+		m := Some("hello")
+		result := FlatMap(m, func(s string) Maybe[int] {
+			if len(s) > 0 {
+				return Some(len(s))
+			}
+			return None[int]()
+		})
+
+		value, err := result.Unwrap()
+		if err != nil {
+			t.Errorf("FlatMap result should unwrap without error, got: %v", err)
+		}
+		if value != 5 {
+			t.Errorf("Expected 5, got %v", value)
+		}
+	})
+
+	t.Run("conditional transformation returns None", func(t *testing.T) {
+		m := Some("")
+		result := FlatMap(m, func(s string) Maybe[int] {
+			if len(s) > 0 {
+				return Some(len(s))
+			}
+			return None[int]()
+		})
+
+		if !result.IsNone() {
+			t.Error("FlatMap should return None when condition fails")
 		}
 	})
 }

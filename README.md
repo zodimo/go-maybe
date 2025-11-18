@@ -7,6 +7,7 @@ A generic Maybe/Option type implementation for Go, providing a safe way to handl
 - **Type-safe**: Uses Go generics to provide compile-time type safety
 - **Zero dependencies**: Pure Go implementation with no external dependencies
 - **Comprehensive API**: Includes `Map`, `FlatMap`, `Filter`, and more
+- **Type transformations**: Helper functions support transforming between different types
 - **Safe unwrapping**: Multiple ways to extract values with proper error handling
 
 ## Installation
@@ -65,13 +66,17 @@ value := m.UnwrapOr(100) // Returns 100
 
 ### Transforming Values
 
+#### Methods (Same Type)
+
+The methods `Map`, `FlatMap`, and `Filter` work on the same type:
+
 ```go
-// Map: transform the value if present
+// Map: transform the value if present (same type)
 m := maybe.Some(5)
 doubled := m.Map(func(x int) int { return x * 2 })
 // doubled is Some(10)
 
-// FlatMap: transform to another Maybe
+// FlatMap: transform to another Maybe (same type)
 m := maybe.Some(5)
 result := m.FlatMap(func(x int) maybe.Maybe[int] {
     if x > 0 {
@@ -84,6 +89,36 @@ result := m.FlatMap(func(x int) maybe.Maybe[int] {
 m := maybe.Some(10)
 filtered := m.Filter(func(x int) bool { return x > 5 })
 // filtered is Some(10)
+```
+
+#### Helper Functions (Type Transformations)
+
+The standalone helper functions `Map`, `FlatMap`, and `Filter` support transforming between different types:
+
+```go
+// Map: transform int to string
+m := maybe.Some(42)
+result := maybe.Map(m, func(x int) string {
+    return fmt.Sprintf("number: %d", x)
+})
+// result is Maybe[string] with value "number: 42"
+
+// Map: transform string to int
+m := maybe.Some("hello")
+result := maybe.Map(m, func(s string) int {
+    return len(s)
+})
+// result is Maybe[int] with value 5
+
+// FlatMap: transform int to Maybe[string]
+m := maybe.Some(5)
+result := maybe.FlatMap(m, func(x int) maybe.Maybe[string] {
+    if x > 0 {
+        return maybe.Some("positive")
+    }
+    return maybe.None[string]()
+})
+// result is Maybe[string] with value "positive"
 ```
 
 ### Providing Default Values
@@ -125,6 +160,8 @@ result := maybe.Some(5).
 - `Some[T any](value T) Maybe[T]`: Creates a `Maybe` with a value
 - `None[T any]() Maybe[T]`: Creates an empty `Maybe`
 - `NewMaybe[T any]() Maybe[T]`: Creates a new empty `Maybe` (alias for `None`)
+- `Map[T any, R any](m Maybe[T], f func(T) R) Maybe[R]`: Transforms a `Maybe[T]` to `Maybe[R]` by applying function `f` if the value is present
+- `FlatMap[T any, R any](m Maybe[T], f func(T) Maybe[R]) Maybe[R]`: Transforms a `Maybe[T]` to `Maybe[R]` by applying function `f` that returns a `Maybe[R]` if the value is present
 
 ### Methods
 
@@ -175,14 +212,47 @@ m := map[string]int{"foo": 42}
 value := getValue(m, "foo").OrElse(0)
 ```
 
+### Type Transformations with Helper Functions
+
+```go
+// Transform a number to a formatted string
+num := maybe.Some(42)
+formatted := maybe.Map(num, func(x int) string {
+    return fmt.Sprintf("Value: %d", x)
+})
+// formatted is Maybe[string] with value "Value: 42"
+
+// Parse a string to an integer with validation
+str := maybe.Some("123")
+parsed := maybe.FlatMap(str, func(s string) maybe.Maybe[int] {
+    if val, err := strconv.Atoi(s); err == nil {
+        return maybe.Some(val)
+    }
+    return maybe.None[int]()
+})
+// parsed is Maybe[int] with value 123
+```
+
 ### Chaining Transformations
 
 ```go
+// Using methods (same type)
 result := maybe.Some("hello").
     Map(func(s string) string { return strings.ToUpper(s) }).
     Map(func(s string) string { return s + " WORLD" }).
     Filter(func(s string) bool { return len(s) > 5 }).
     OrElse("default")
+
+// Using helper functions (type transformations)
+m := maybe.Some(42)
+strMaybe := maybe.Map(m, func(x int) string { return fmt.Sprintf("%d", x) })
+intMaybe := maybe.FlatMap(strMaybe, func(s string) maybe.Maybe[int] {
+    if len(s) > 0 {
+        return maybe.Some(len(s))
+    }
+    return maybe.None[int]()
+})
+result := intMaybe.OrElse(0)
 ```
 
 ## License
