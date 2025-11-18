@@ -57,6 +57,10 @@ if err != nil {
 
 // Unsafe unwrapping (panics if None)
 value := m.UnwrapUnsafe() // Use with caution!
+
+// UnwrapOr: provide a default value if None
+m := maybe.None[int]()
+value := m.UnwrapOr(100) // Returns 100
 ```
 
 ### Transforming Values
@@ -128,6 +132,7 @@ result := maybe.Some(5).
 - `IsNone() bool`: Returns `true` if the `Maybe` is empty
 - `Unwrap() (T, error)`: Returns the value and an error (error is non-nil if `None`)
 - `UnwrapUnsafe() T`: Returns the value, panics if `None`
+- `UnwrapOr(defaultValue T) T`: Returns the value if present, otherwise returns `defaultValue`
 - `Map(f func(T) T) Maybe[T]`: Transforms the value if present, returns `None` otherwise
 - `FlatMap(f func(T) Maybe[T]) Maybe[T]`: Transforms to another `Maybe` if present
 - `Filter(f func(T) bool) Maybe[T]`: Keeps the value only if the predicate returns `true`

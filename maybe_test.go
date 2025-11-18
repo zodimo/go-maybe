@@ -190,6 +190,52 @@ func TestUnwrapUnsafe(t *testing.T) {
 	})
 }
 
+func TestUnwrapOr(t *testing.T) {
+	t.Run("returns value for Some", func(t *testing.T) {
+		m := Some(42)
+		value := m.UnwrapOr(100)
+		if value != 42 {
+			t.Errorf("Expected 42, got %v", value)
+		}
+	})
+
+	t.Run("returns default value for None", func(t *testing.T) {
+		m := None[int]()
+		value := m.UnwrapOr(100)
+		if value != 100 {
+			t.Errorf("Expected 100, got %v", value)
+		}
+	})
+
+	t.Run("works with strings", func(t *testing.T) {
+		m := Some("hello")
+		value := m.UnwrapOr("default")
+		if value != "hello" {
+			t.Errorf("Expected 'hello', got %v", value)
+		}
+
+		m2 := None[string]()
+		value2 := m2.UnwrapOr("default")
+		if value2 != "default" {
+			t.Errorf("Expected 'default', got %v", value2)
+		}
+	})
+
+	t.Run("works with zero values", func(t *testing.T) {
+		m := Some(0)
+		value := m.UnwrapOr(100)
+		if value != 0 {
+			t.Errorf("Expected 0, got %v", value)
+		}
+
+		m2 := None[int]()
+		value2 := m2.UnwrapOr(0)
+		if value2 != 0 {
+			t.Errorf("Expected 0, got %v", value2)
+		}
+	})
+}
+
 func TestMap(t *testing.T) {
 	t.Run("applies function to Some value", func(t *testing.T) {
 		m := Some(5)
