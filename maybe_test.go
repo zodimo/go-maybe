@@ -741,3 +741,44 @@ func TestNoneWithInterface(t *testing.T) {
 		}
 	})
 }
+
+func TestMatch(t *testing.T) {
+	t.Run("calls onSome for Some value", func(t *testing.T) {
+		m := Some(42)
+		result := Match(m, func(x int) string {
+			return fmt.Sprintf("value: %d", x)
+		}, func() string {
+			return "none"
+		})
+
+		if result != "value: 42" {
+			t.Errorf("Expected 'value: 42', got %v", result)
+		}
+	})
+
+	t.Run("calls onNone for None value", func(t *testing.T) {
+		m := None[int]()
+		result := Match(m, func(x int) string {
+			return fmt.Sprintf("value: %d", x)
+		}, func() string {
+			return "none"
+		})
+
+		if result != "none" {
+			t.Errorf("Expected 'none', got %v", result)
+		}
+	})
+
+	t.Run("works with different return types", func(t *testing.T) {
+		m := Some(5)
+		result := Match(m, func(x int) int {
+			return x * 2
+		}, func() int {
+			return 0
+		})
+
+		if result != 10 {
+			t.Errorf("Expected 10, got %v", result)
+		}
+	})
+}

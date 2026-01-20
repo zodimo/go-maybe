@@ -91,3 +91,10 @@ func (m Maybe[T]) OrElseError(err error) (T, error) {
 	var zero T
 	return zero, err
 }
+
+func Match[T, U any](m Maybe[T], onSome func(T) U, onNone func() U) U {
+	if m.hasValue {
+		return onSome(m.value)
+	}
+	return onNone()
+}
