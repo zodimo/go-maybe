@@ -7,8 +7,9 @@ help:
 	@echo "  tag-major   - Increment major version (vX.0.0 -> vX+1.0.0)"
 
 
-# Default to v0.0.0 if no tags exist
-CURRENT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
+# Get the latest tag (globally) or default to v0.0.0
+LATEST_TAG := $(shell git tag -l | sort -V | tail -n 1)
+CURRENT_TAG := $(if $(LATEST_TAG),$(LATEST_TAG),v0.0.0)
 
 # Parse current version
 MAJOR := $(shell echo $(CURRENT_TAG) | awk -F. '{print $$1}' | sed 's/v//')
