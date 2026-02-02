@@ -2,6 +2,7 @@ package maybe
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Maybe[T any] struct {
@@ -96,4 +97,11 @@ func (m Maybe[T]) OrElseError(err error) (T, error) {
 // Used by encoding/json's 'omitzero' tag to omit missing fields.
 func (m Maybe[T]) IsZero() bool {
 	return !m.hasValue
+}
+
+func (m Maybe[T]) String() string {
+	if m.hasValue {
+		return fmt.Sprintf("Some[%T](%v)", m.value, m.value)
+	}
+	return fmt.Sprintf("None[%T]()", m.value)
 }

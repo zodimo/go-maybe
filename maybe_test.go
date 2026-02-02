@@ -782,3 +782,51 @@ func TestMatch(t *testing.T) {
 		}
 	})
 }
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func TestString(t *testing.T) {
+	t.Run("formats Some[int]", func(t *testing.T) {
+		m := Some(42)
+		expected := "Some[int](42)"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+
+	t.Run("formats None[int]", func(t *testing.T) {
+		m := None[int]()
+		expected := "None[int]()"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+
+	t.Run("formats Some[string]", func(t *testing.T) {
+		m := Some("hello")
+		expected := "Some[string](hello)"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+
+	t.Run("formats None[string]", func(t *testing.T) {
+		m := None[string]()
+		expected := "None[string]()"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+
+	t.Run("formats Some[struct]", func(t *testing.T) {
+		p := Person{Name: "John", Age: 30}
+		m := Some(p)
+		expected := "Some[maybe.Person]({John 30})"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+}
