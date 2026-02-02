@@ -13,6 +13,10 @@ A generic Maybe/Option type implementation for Go, providing a safe way to handl
 
 ## JSON v2 Support (Go 1.25+)
 
+- [Go Blog: JSON v2 Experiment](https://go.dev/blog/jsonv2-exp)
+- [pkg.go.dev: encoding/json/v2](https://pkg.go.dev/encoding/json/v2)
+
+
 When built with `GOEXPERIMENT=jsonv2`, Maybe seamlessly integrates with `encoding/json`'s `omitzero` tag:
 
 ```go
