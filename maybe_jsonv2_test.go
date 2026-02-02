@@ -16,8 +16,9 @@ type TestConfigScalar struct {
 
 // Test struct with nested object Maybe field
 type TestAddress struct {
-	Street string `json:"street"`
-	City   string `json:"city"`
+	Street     string        `json:"street"`
+	City       string        `json:"city"`
+	PostalCode Maybe[string] `json:"postalcode,omitzero"`
 }
 
 type TestConfigObject struct {
@@ -80,6 +81,30 @@ func TestUnmarshalPresentScalar(t *testing.T) {
 }
 
 func TestUnmarshalPresentObject(t *testing.T) {
+	jsonData := []byte(`{"name": "test", "address": {"street": "123 Main", "city": "NYC", "postalcode": "10001"}}`)
+
+	var cfg TestConfigObject
+	if err := json.Unmarshal(jsonData, &cfg); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	if cfg.Address.IsNone() {
+		t.Error("Expected Address to be Some when field is present")
+	}
+	addr, _ := cfg.Address.Unwrap()
+	if addr.Street != "123 Main" || addr.City != "NYC" {
+		t.Errorf("Expected address {123 Main, NYC}, got {%s, %s}", addr.Street, addr.City)
+	}
+
+	if addr.PostalCode.IsNone() {
+		t.Error("Expected PostalCode to be Some when field is present")
+	}
+	if val, _ := addr.PostalCode.Unwrap(); val != "10001" {
+		t.Errorf("Expected PostalCode value '10001', got %s", val)
+	}
+}
+
+func TestUnmarshalPresentObjectMissingNested(t *testing.T) {
 	jsonData := []byte(`{"name": "test", "address": {"street": "123 Main", "city": "NYC"}}`)
 
 	var cfg TestConfigObject
@@ -93,6 +118,10 @@ func TestUnmarshalPresentObject(t *testing.T) {
 	addr, _ := cfg.Address.Unwrap()
 	if addr.Street != "123 Main" || addr.City != "NYC" {
 		t.Errorf("Expected address {123 Main, NYC}, got {%s, %s}", addr.Street, addr.City)
+	}
+
+	if addr.PostalCode.IsSome() {
+		t.Error("Expected PostalCode to be None when field is omitted")
 	}
 }
 
