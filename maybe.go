@@ -91,3 +91,9 @@ func (m Maybe[T]) OrElseError(err error) (T, error) {
 	var zero T
 	return zero, err
 }
+
+// IsZero returns true if Maybe has no value.
+// Used by encoding/json's 'omitzero' tag to omit missing fields.
+func (m Maybe[T]) IsZero() bool {
+	return !m.hasValue
+}

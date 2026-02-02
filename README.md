@@ -9,6 +9,32 @@ A generic Maybe/Option type implementation for Go, providing a safe way to handl
 - **Comprehensive API**: Includes `Map`, `FlatMap`, `Filter`, and more
 - **Type transformations**: Helper functions support transforming between different types
 - **Safe unwrapping**: Multiple ways to extract values with proper error handling
+- **JSON v2 support**: Optional integration with Go's experimental `json/v2` package
+
+## JSON v2 Support (Go 1.25+)
+
+When built with `GOEXPERIMENT=jsonv2`, Maybe seamlessly integrates with `encoding/json`'s `omitzero` tag:
+
+```go
+type Config struct {
+    Name    string          `json:"name"`
+    Timeout maybe.Maybe[int] `json:"timeout,omitzero"`
+}
+
+// Unmarshalling: missing fields become None
+json.Unmarshal([]byte(`{"name": "test"}`), &cfg)
+cfg.Timeout.IsNone() // true
+
+// Marshalling: None fields are omitted
+cfg := Config{Name: "test", Timeout: maybe.None[int]()}
+json.Marshal(cfg) // {"name":"test"}
+
+// Present values work normally
+cfg.Timeout = maybe.Some(30)
+json.Marshal(cfg) // {"name":"test","timeout":30}
+```
+
+Build with: `GOEXPERIMENT=jsonv2 go build ./...`
 
 ## Installation
 

@@ -1,10 +1,18 @@
-.PHONY: help tag-patch tag-minor tag-major
+.PHONY: help test testv2 tag-patch tag-minor tag-major
 
 help:
 	@echo "Available targets:"
+	@echo "  test        - Run tests (standard mode, no GOEXPERIMENT)"
+	@echo "  testv2      - Run tests with GOEXPERIMENT=jsonv2"
 	@echo "  tag-patch   - Increment patch version (v0.0.X -> v0.0.X+1)"
 	@echo "  tag-minor   - Increment minor version (v0.X.0 -> v0.X+1.0)"
 	@echo "  tag-major   - Increment major version (vX.0.0 -> vX+1.0.0)"
+
+test:
+	GOEXPERIMENT= go test ./...
+
+testv2:
+	GOEXPERIMENT=jsonv2 go test ./...
 
 
 # Get the latest tag (globally) or default to v0.0.0
