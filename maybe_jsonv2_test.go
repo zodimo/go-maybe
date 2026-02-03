@@ -21,9 +21,16 @@ type TestAddress struct {
 	PostalCode Maybe[string] `json:"postalcode,omitzero"`
 }
 
+type TestAddress2 struct {
+	Street     Maybe[string] `json:"street"`
+	City       Maybe[string] `json:"city"`
+	PostalCode Maybe[string] `json:"postalcode,omitzero"`
+}
+
 type TestConfigObject struct {
-	Name    string             `json:"name"`
-	Address Maybe[TestAddress] `json:"address,omitzero"`
+	Name     string             `json:"name"`
+	Address  Maybe[TestAddress] `json:"address,omitzero"`
+	Address2 TestAddress2       `json:"address2,omitzero"`
 }
 
 func TestUnmarshalOmittedScalar(t *testing.T) {
@@ -191,5 +198,27 @@ func TestUnmarshalNullValue(t *testing.T) {
 	// Field was present (as null), so it should be Some with zero value
 	if cfg.Timeout.IsNone() {
 		t.Error("Expected Timeout to be Some when field is present (even as null)")
+	}
+}
+
+func TestMarshalNoneNestedObject(t *testing.T) {
+	cfg := TestConfigObject{
+		Name: "test",
+		Address2: TestAddress2{
+			Street:     None[string](),
+			City:       None[string](),
+			PostalCode: None[string](),
+		},
+	}
+
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+
+	// With omitzero, Address2 field should be omitted because all its fields are None (zero)
+	expected := `{"name":"test"}`
+	if string(data) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(data))
 	}
 }
