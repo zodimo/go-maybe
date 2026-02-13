@@ -195,9 +195,46 @@ func TestUnmarshalNullValue(t *testing.T) {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 
-	// Field was present (as null), so it should be Some with zero value
-	if cfg.Timeout.IsNone() {
-		t.Error("Expected Timeout to be Some when field is present (even as null)")
+	// Field was present (as null), checks for explicit null -> None
+	if cfg.Timeout.IsSome() {
+		t.Error("Expected Timeout to be None when field is explicitly null")
+	}
+}
+
+func TestUnmarshalNullObject(t *testing.T) {
+	// JSON with explicit null object
+	jsonData := []byte(`{"name": "test", "address": null}`)
+
+	var cfg TestConfigObject
+	if err := json.Unmarshal(jsonData, &cfg); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	if cfg.Address.IsSome() {
+		t.Error("Expected Address to be None when field is explicitly null")
+	}
+}
+
+type TestConfigPointer struct {
+	Val Maybe[*int] `json:"val"`
+}
+
+func TestUnmarshalNullPointer(t *testing.T) {
+	// JSON with explicit null pointer
+	jsonData := []byte(`{"val": null}`)
+
+	var cfg TestConfigPointer
+	if err := json.Unmarshal(jsonData, &cfg); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	// For pointer types, null should be Some(nil)
+	if cfg.Val.IsNone() {
+		t.Error("Expected Val to be Some when field is explicitly null for pointer type")
+	}
+
+	if val, _ := cfg.Val.Unwrap(); val != nil {
+		t.Errorf("Expected Val to be nil, got %v", val)
 	}
 }
 

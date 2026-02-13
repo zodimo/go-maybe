@@ -40,6 +40,10 @@ json.Marshal(cfg) // {"name":"test","timeout":30}
 
 Build with: `GOEXPERIMENT=jsonv2 go build ./...`
 
+### Json NULL semantics
+- null on none pointer values are None()
+- null on pointer values are Some(nil)
+
 ## Installation
 
 ```bash
