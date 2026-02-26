@@ -2,16 +2,16 @@ package maybe
 
 import "testing"
 
-func TestFromPtr(t *testing.T) {
+func TestFromPtrDereferenced(t *testing.T) {
 	t.Run("returns Some when pointer is non-nil int", func(t *testing.T) {
 		val := 42
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 
 		if !m.IsSome() {
-			t.Error("FromPtr with non-nil pointer should return Some")
+			t.Error("FromPtrDereferenced with non-nil pointer should return Some")
 		}
 		if m.IsNone() {
-			t.Error("FromPtr with non-nil pointer should not return None")
+			t.Error("FromPtrDereferenced with non-nil pointer should not return None")
 		}
 
 		got, err := m.Unwrap()
@@ -25,10 +25,10 @@ func TestFromPtr(t *testing.T) {
 
 	t.Run("returns Some when pointer is non-nil string", func(t *testing.T) {
 		val := "hello"
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 
 		if !m.IsSome() {
-			t.Error("FromPtr with non-nil pointer should return Some")
+			t.Error("FromPtrDereferenced with non-nil pointer should return Some")
 		}
 
 		got, err := m.Unwrap()
@@ -42,10 +42,10 @@ func TestFromPtr(t *testing.T) {
 
 	t.Run("returns Some with zero value pointer", func(t *testing.T) {
 		val := 0
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 
 		if !m.IsSome() {
-			t.Error("FromPtr with pointer to zero value should return Some")
+			t.Error("FromPtrDereferenced with pointer to zero value should return Some")
 		}
 
 		got, err := m.Unwrap()
@@ -59,10 +59,10 @@ func TestFromPtr(t *testing.T) {
 
 	t.Run("returns Some with empty string pointer", func(t *testing.T) {
 		val := ""
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 
 		if !m.IsSome() {
-			t.Error("FromPtr with pointer to empty string should return Some")
+			t.Error("FromPtrDereferenced with pointer to empty string should return Some")
 		}
 
 		got, err := m.Unwrap()
@@ -76,31 +76,31 @@ func TestFromPtr(t *testing.T) {
 
 	t.Run("returns None when pointer is nil int", func(t *testing.T) {
 		var ptr *int
-		m := FromPtr(ptr)
+		m := FromPtrDereferenced(ptr)
 
 		if m.IsSome() {
-			t.Error("FromPtr with nil pointer should return None")
+			t.Error("FromPtrDereferenced with nil pointer should return None")
 		}
 		if !m.IsNone() {
-			t.Error("FromPtr with nil pointer should return None")
+			t.Error("FromPtrDereferenced with nil pointer should return None")
 		}
 	})
 
 	t.Run("returns None when pointer is nil string", func(t *testing.T) {
 		var ptr *string
-		m := FromPtr(ptr)
+		m := FromPtrDereferenced(ptr)
 
 		if m.IsSome() {
-			t.Error("FromPtr with nil pointer should return None")
+			t.Error("FromPtrDereferenced with nil pointer should return None")
 		}
 		if !m.IsNone() {
-			t.Error("FromPtr with nil pointer should return None")
+			t.Error("FromPtrDereferenced with nil pointer should return None")
 		}
 	})
 
 	t.Run("value is a copy not a reference", func(t *testing.T) {
 		val := 42
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 		val = 100 // mutate original
 
 		got, err := m.Unwrap()
@@ -117,10 +117,10 @@ func TestFromPtr(t *testing.T) {
 			X, Y int
 		}
 		val := Point{X: 1, Y: 2}
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 
 		if !m.IsSome() {
-			t.Error("FromPtr with non-nil struct pointer should return Some")
+			t.Error("FromPtrDereferenced with non-nil struct pointer should return Some")
 		}
 
 		got, err := m.Unwrap()
@@ -231,10 +231,10 @@ func TestToPtr(t *testing.T) {
 	})
 }
 
-func TestFromPtrToPtr_Roundtrip(t *testing.T) {
+func TestFromPtrDereferencedToPtr_Roundtrip(t *testing.T) {
 	t.Run("Some roundtrip preserves value", func(t *testing.T) {
 		val := 42
-		m := FromPtr(&val)
+		m := FromPtrDereferenced(&val)
 		ptr := m.ToPtr()
 
 		if ptr == nil {
@@ -247,7 +247,7 @@ func TestFromPtrToPtr_Roundtrip(t *testing.T) {
 
 	t.Run("None roundtrip preserves nil", func(t *testing.T) {
 		var ptr *int
-		m := FromPtr(ptr)
+		m := FromPtrDereferenced(ptr)
 		result := m.ToPtr()
 
 		if result != nil {
@@ -255,10 +255,10 @@ func TestFromPtrToPtr_Roundtrip(t *testing.T) {
 		}
 	})
 
-	t.Run("ToPtr then FromPtr roundtrip", func(t *testing.T) {
+	t.Run("ToPtr then FromPtrDereferenced roundtrip", func(t *testing.T) {
 		m := Some("test")
 		ptr := m.ToPtr()
-		m2 := FromPtr(ptr)
+		m2 := FromPtrDereferenced(ptr)
 
 		if !m2.IsSome() {
 			t.Error("Roundtrip should produce Some")
@@ -273,13 +273,108 @@ func TestFromPtrToPtr_Roundtrip(t *testing.T) {
 		}
 	})
 
-	t.Run("None ToPtr then FromPtr roundtrip", func(t *testing.T) {
+	t.Run("None ToPtr then FromPtrDereferenced roundtrip", func(t *testing.T) {
 		m := None[int]()
 		ptr := m.ToPtr()
-		m2 := FromPtr(ptr)
+		m2 := FromPtrDereferenced(ptr)
 
 		if !m2.IsNone() {
 			t.Error("Roundtrip of None should produce None")
+		}
+	})
+}
+
+func TestFromPtr(t *testing.T) {
+	t.Run("returns Some when pointer is non-nil int", func(t *testing.T) {
+		val := 42
+		m := FromPtr(&val)
+
+		if !m.IsSome() {
+			t.Error("FromPtr with non-nil pointer should return Some")
+		}
+
+		got, err := m.Unwrap()
+		if err != nil {
+			t.Errorf("Unwrap should not return error, got: %v", err)
+		}
+		if got != &val {
+			t.Errorf("Expected pointer to val, got %v", got)
+		}
+	})
+
+	t.Run("returns None when pointer is nil string", func(t *testing.T) {
+		var ptr *string
+		m := FromPtr(ptr)
+
+		if m.IsSome() {
+			t.Error("FromPtr with nil pointer should return None")
+		}
+		if !m.IsNone() {
+			t.Error("FromPtr with nil pointer should return None")
+		}
+	})
+}
+
+func TestFromInterface(t *testing.T) {
+	t.Run("returns Some when interface has concrete value", func(t *testing.T) {
+		type customStruct struct{}
+		var val any = &customStruct{}
+		m := FromInterface(val)
+
+		if !m.IsSome() {
+			t.Error("FromInterface with concrete value should return Some")
+		}
+
+		got, unwrapErr := m.Unwrap()
+		if unwrapErr != nil {
+			t.Errorf("Unwrap should not return error, got: %v", unwrapErr)
+		}
+		if got != val {
+			t.Errorf("Expected specific value, got %v", got)
+		}
+	})
+
+	t.Run("returns None when interface is untyped nil", func(t *testing.T) {
+		var err error = nil
+		m := FromInterface(err)
+
+		if m.IsSome() {
+			t.Error("FromInterface with nil should return None")
+		}
+		if !m.IsNone() {
+			t.Error("FromInterface with nil should return None")
+		}
+	})
+
+	t.Run("returns Some with typed string", func(t *testing.T) {
+		var val any = "hello"
+		m := FromInterface(val)
+
+		if !m.IsSome() {
+			t.Error("FromInterface with string should return Some")
+		}
+
+		got, unwrapErr := m.Unwrap()
+		if unwrapErr != nil {
+			t.Errorf("Unwrap should not return error, got: %v", unwrapErr)
+		}
+		if got != "hello" {
+			t.Errorf("Expected specific string, got %v", got)
+		}
+	})
+
+	t.Run("returns None when custom interface is nil", func(t *testing.T) {
+		type Person interface {
+			Name() string
+		}
+		var person Person = nil
+		m := FromInterface(person)
+
+		if m.IsSome() {
+			t.Error("FromInterface with nil custom interface should return None")
+		}
+		if !m.IsNone() {
+			t.Error("FromInterface with nil custom interface should return None")
 		}
 	})
 }
