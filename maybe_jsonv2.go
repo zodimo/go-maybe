@@ -13,8 +13,8 @@ import (
 func (m Maybe[T]) MarshalJSONTo(enc *jsontext.Encoder) error {
 	if !m.hasValue {
 		// When used with omitzero, this shouldn't be called for None values.
-		// If called directly, output nothing.
-		return nil
+		// If called directly, we must output exactly one JSON value (null)
+		return enc.WriteToken(jsontext.Null)
 	}
 	return json.MarshalEncode(enc, m.value)
 }
