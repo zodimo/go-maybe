@@ -829,4 +829,21 @@ func TestString(t *testing.T) {
 			t.Errorf("Expected %q, got %q", expected, m.String())
 		}
 	})
+
+	t.Run("formats Some[error]", func(t *testing.T) {
+		e := errors.New("Some error")
+		m := Some(e)
+		expected := "Some[error](Some error)"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
+
+	t.Run("formats Some[any]", func(t *testing.T) {
+		m := Some[any](5)
+		expected := "Some[interface {}](5)"
+		if m.String() != expected {
+			t.Errorf("Expected %q, got %q", expected, m.String())
+		}
+	})
 }

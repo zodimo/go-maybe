@@ -3,6 +3,7 @@ package maybe
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type Maybe[T any] struct {
@@ -98,8 +99,9 @@ func (m Maybe[T]) IsZero() bool {
 }
 
 func (m Maybe[T]) String() string {
+	vType := reflect.TypeOf((*T)(nil)).Elem()
 	if m.hasValue {
-		return fmt.Sprintf("Some[%T](%v)", m.value, m.value)
+		return fmt.Sprintf("Some[%s](%v)", vType, m.value)
 	}
-	return fmt.Sprintf("None[%T]()", m.value)
+	return fmt.Sprintf("None[%s]()", vType)
 }
