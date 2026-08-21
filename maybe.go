@@ -53,18 +53,16 @@ func (m Maybe[T]) UnwrapOr(defaultValue T) T {
 	return m.OrElse(defaultValue)
 }
 
-func (m Maybe[T]) Map(f func(T) T) Maybe[T] {
-	if m.hasValue {
-		return Some(f(m.value))
-	}
-	return None[T]()
+func (m Maybe[T]) Map[R any](f func(T) R) Maybe[R] {
+	return Map(m, f)
 }
 
-func (m Maybe[T]) FlatMap(f func(T) Maybe[T]) Maybe[T] {
-	if m.hasValue {
-		return f(m.value)
-	}
-	return None[T]()
+func (m Maybe[T]) FlatMap[R any](f func(T) Maybe[R]) Maybe[R] {
+	return FlatMap(m, f)
+}
+
+func (m Maybe[T]) Match[R any](onSome func(T) R, onNone func() R) R {
+	return Match(m, onSome, onNone)
 }
 
 func (m Maybe[T]) Filter(f func(T) bool) Maybe[T] {

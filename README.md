@@ -6,18 +6,16 @@ A generic Maybe/Option type implementation for Go, providing a safe way to handl
 
 - **Type-safe**: Uses Go generics to provide compile-time type safety
 - **Zero dependencies**: Pure Go implementation with no external dependencies
-- **Comprehensive API**: Includes `Map`, `FlatMap`, `Filter`, and more
-- **Type transformations**: Helper functions support transforming between different types
+- **Comprehensive API**: Includes `Map`, `FlatMap`, `Filter`, `Match`, and more
+- **Type transformations**: Both methods and helper functions support transforming between different types
 - **Safe unwrapping**: Multiple ways to extract values with proper error handling
-- **JSON v2 support**: Optional integration with Go's experimental `json/v2` package
+- **JSON v2 support**: Built-in integration with the standard library's `json/v2` package (Go 1.27+)
 
-## JSON v2 Support (Go 1.25+)
+## JSON v2 Support (Go 1.27+)
 
-- [Go Blog: JSON v2 Experiment](https://go.dev/blog/jsonv2-exp)
 - [pkg.go.dev: encoding/json/v2](https://pkg.go.dev/encoding/json/v2)
 
-
-When built with `GOEXPERIMENT=jsonv2`, Maybe seamlessly integrates with `encoding/json`'s `omitzero` tag:
+Since Go 1.27, the `json/v2` package is part of the standard library (no longer behind the `GOEXPERIMENT=jsonv2` flag). Maybe integrates with its `omitzero` tag by default:
 
 ```go
 type Config struct {
@@ -37,8 +35,6 @@ json.Marshal(cfg) // {"name":"test"}
 cfg.Timeout = maybe.Some(30)
 json.Marshal(cfg) // {"name":"test","timeout":30}
 ```
-
-Build with: `GOEXPERIMENT=jsonv2 go build ./...`
 
 ### Json NULL semantics
 - null on none pointer values are None()
@@ -100,34 +96,56 @@ value := m.UnwrapOr(100) // Returns 100
 
 ### Transforming Values
 
-#### Methods (Same Type)
+#### Methods (Type Transformations)
 
-The methods `Map`, `FlatMap`, and `Filter` work on the same type:
+The methods `Map` and `FlatMap` are generic and can transform between different types. `Filter` keeps the same type:
 
 ```go
-// Map: transform the value if present (same type)
+// Map: transform the value, possibly to a different type
 m := maybe.Some(5)
 doubled := m.Map(func(x int) int { return x * 2 })
 // doubled is Some(10)
 
-// FlatMap: transform to another Maybe (same type)
-m := maybe.Some(5)
-result := m.FlatMap(func(x int) maybe.Maybe[int] {
-    if x > 0 {
-        return maybe.Some(x * 2)
-    }
-    return maybe.None[int]()
-})
+// Map: transform int to string
+m := maybe.Some(42)
+str := m.Map(func(x int) string { return fmt.Sprintf("number: %d", x) })
+// str is Maybe[string] with value "number: 42"
 
-// Filter: keep value only if predicate is true
+// FlatMap: transform to another Maybe, possibly of a different type
+m := maybe.Some(5)
+result := m.FlatMap(func(x int) maybe.Maybe[string] {
+    if x > 0 {
+        return maybe.Some("positive")
+    }
+    return maybe.None[string]()
+})
+// result is Maybe[string] with value "positive"
+
+// Filter: keep value only if predicate is true (same type)
 m := maybe.Some(10)
 filtered := m.Filter(func(x int) bool { return x > 5 })
 // filtered is Some(10)
 ```
 
+#### Match
+
+`Match` (both a method and a standalone helper) evaluates a `Maybe` and returns a result for either the `Some` or the `None` branch:
+
+```go
+// Match: return a string describing the value
+m := maybe.Some(42)
+desc := m.Match(func(x int) string { return fmt.Sprintf("value: %d", x) }, func() string { return "none" })
+// desc is "value: 42"
+
+// Match helper (type transformation)
+n := maybe.None[int]()
+floatVal := maybe.Match(n, func(x int) float64 { return float64(x) * 1.5 }, func() float64 { return 0.0 })
+// floatVal is 0.0
+```
+
 #### Helper Functions (Type Transformations)
 
-The standalone helper functions `Map`, `FlatMap`, and `Filter` support transforming between different types:
+The standalone helper functions `Map`, `FlatMap`, and `Match` support transforming between different types:
 
 ```go
 // Map: transform int to string
@@ -196,6 +214,7 @@ result := maybe.Some(5).
 - `NewMaybe[T any]() Maybe[T]`: Creates a new empty `Maybe` (alias for `None`)
 - `Map[T any, R any](m Maybe[T], f func(T) R) Maybe[R]`: Transforms a `Maybe[T]` to `Maybe[R]` by applying function `f` if the value is present
 - `FlatMap[T any, R any](m Maybe[T], f func(T) Maybe[R]) Maybe[R]`: Transforms a `Maybe[T]` to `Maybe[R]` by applying function `f` that returns a `Maybe[R]` if the value is present
+- `Match[T any, U any](m Maybe[T], onSome func(T) U, onNone func() U) U`: Evaluates the `Maybe` and returns the result of `onSome` if present, otherwise `onNone`
 
 ### Methods
 
@@ -204,8 +223,9 @@ result := maybe.Some(5).
 - `Unwrap() (T, error)`: Returns the value and an error (error is non-nil if `None`)
 - `UnwrapUnsafe() T`: Returns the value, panics if `None`
 - `UnwrapOr(defaultValue T) T`: Returns the value if present, otherwise returns `defaultValue`
-- `Map(f func(T) T) Maybe[T]`: Transforms the value if present, returns `None` otherwise
-- `FlatMap(f func(T) Maybe[T]) Maybe[T]`: Transforms to another `Maybe` if present
+- `Map[R any](f func(T) R) Maybe[R]`: Transforms the value if present (possibly to a different type), returns `None` otherwise
+- `FlatMap[R any](f func(T) Maybe[R]) Maybe[R]`: Transforms to another `Maybe`, possibly of a different type, if present
+- `Match[R any](onSome func(T) R, onNone func() R) R`: Returns the result of `onSome` if present, otherwise the result of `onNone`
 - `Filter(f func(T) bool) Maybe[T]`: Keeps the value only if the predicate returns `true`
 - `OrElse(elseValue T) T`: Returns the value if present, otherwise returns `elseValue`
 - `OrElseGet(f func() T) T`: Returns the value if present, otherwise calls `f()` and returns its result
